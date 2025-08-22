@@ -58,3 +58,4 @@ make clean
 ## Acknowledgements
 
 - Project was created using [go-blueprint](https://github.com/Melkeydev/go-blueprint)
+- For testing purposes I used [Big Buck Bunny](https://peach.blender.org/) as a test video
