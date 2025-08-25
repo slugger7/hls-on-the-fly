@@ -12,7 +12,7 @@ The service is not intended to be hosted to many people so the performance hit o
 - [x] Serve up a video file
 - [x] Serve up a video file with HLS
 - [ ] Serve up a video file on the fly with HLS
-  - [ ] Pre-create the entire .m3u8 manifest
+  - [x] Pre-create the entire .m3u8 manifest
   - [ ] Transcode one chunk ffmpeg command
   - [ ] Start the transcode for 3 chunks ahead
   - [ ] If a chunk is requested that has not transcoded yet, transcode that one and 3 chunks ahead.
