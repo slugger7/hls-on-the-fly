@@ -3,6 +3,7 @@ package m3u8
 import (
 	"fmt"
 	"hls-on-the-fly/internal/ffprobe"
+	pathhelpers "hls-on-the-fly/internal/path_helpers"
 	"os"
 	"path"
 	"strings"
@@ -30,10 +31,7 @@ func CreateManifestForFile(p string) (string, error) {
 
 	data := strings.Join(lines, "\n")
 
-	base := path.Base(p)
-	if pos := strings.LastIndexByte(base, '.'); pos != -1 {
-		base = base[:pos]
-	}
+	base := pathhelpers.GetNameWithoutExtension(path.Base(p))
 
 	mediaFolder := path.Join(cacheDir, base)
 
