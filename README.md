@@ -9,8 +9,8 @@ The service is not intended to be hosted to many people so the performance hit o
 ## Goals
 
 - [x] Set up http server
-- [ ] Serve up a video file
-- [ ] Serve up a video file with HLS
+- [x] Serve up a video file
+- [x] Serve up a video file with HLS
 - [ ] Serve up a video file on the fly with HLS
 
 ### Future goals
@@ -54,6 +54,23 @@ Clean up binary from the last build:
 ```bash
 make clean
 ```
+
+## Convert video to HLS format
+
+```bash
+# Without GPU
+ffmpeg -i ./tmp/vid.mp4 -c:v libx264 -c:a aac -hls_list_size 0 -f hls ./public/index.m3u8
+
+# With GPU
+ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
+  -hwaccel_output_format vaapi \
+  -i ./tmp/vid.mp4 \
+  -c:v h264_vaapi \
+  -c:a aac \
+  -hls_time 10 -hls_list_size 0 -f hls ./public/index.m3u8
+```
+
+Surprisingly you can view the video while the transcode is happening and it will reload the manifest file at the end of the video and "live stream it" which is pretty cool but it removes the ability to seek through the video and that is where you or need to wait for the entire video to be transcoded or transcode it on the fly
 
 ## Acknowledgements
 

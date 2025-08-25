@@ -32,3 +32,6 @@ main
 # OS X generated file
 .DS_Store
 
+# Transcodede video HLS video files
+public/index.m3u8
+public/index*.ts

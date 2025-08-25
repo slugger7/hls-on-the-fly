@@ -2,15 +2,20 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"path"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/", s.HelloWorldHandler)
+	fs := http.FileServer(http.Dir("./public"))
+	mux.Handle("/", fs)
+
+	mux.HandleFunc("/video/{file}", s.VideoHandler)
 
 	mux.HandleFunc("/health", s.healthHandler)
 
@@ -37,16 +42,18 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]string{"message": "Hello World"}
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(jsonResp); err != nil {
-		log.Printf("Failed to write response: %v", err)
+func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
+	file := r.PathValue("file")
+	fmt.Println(file)
+	switch path.Ext(file) {
+	case ".ts":
+		w.Header().Add("Content-Type", "video/MP2T")
+		http.ServeFile(w, r, path.Join(".", "public", file))
+	case ".m3u8":
+		w.Header().Add("Content-Type", "application/vnd.apple.mpegurl")
+		http.ServeFile(w, r, path.Join(".", "public", file))
+	default:
+		fmt.Println(path.Ext(file))
 	}
 }
 
