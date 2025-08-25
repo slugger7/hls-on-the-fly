@@ -8,7 +8,11 @@ import (
 func main() {
 	p := "./tmp/vid.mp4"
 
-	data := ffprobe.FFProbe(p)
+	data, err := ffprobe.FFProbe(p)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 
 	fmt.Println("Probe result:", data)
 }

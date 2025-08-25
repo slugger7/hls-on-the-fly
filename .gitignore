@@ -35,3 +35,6 @@ main
 # Transcodede video HLS video files
 public/index.m3u8
 public/index*.ts
+
+# Cache dir for transcoded videos
+cache
