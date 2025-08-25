@@ -58,7 +58,7 @@ func CreateManifestForFile(p string) (string, error) {
 	}
 
 	for i := 0; float64(i*hlsTime) <= probe.Format.Duration; i++ {
-		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v\n%v%v.ts\n", hlsTime, base, i)); err != nil {
+		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v%v.ts\n", hlsTime, base, i)); err != nil {
 			fmt.Println("could not write to manifest for: ", i, err.Error())
 			return "", err
 		}
