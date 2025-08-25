@@ -2,9 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"hls-on-the-fly/internal/m3u8"
+	pathhelpers "hls-on-the-fly/internal/path_helpers"
 	"log"
 	"net/http"
+	"os"
 	"path"
 )
 
@@ -50,8 +54,22 @@ func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "video/MP2T")
 		http.ServeFile(w, r, path.Join(".", "cache", "vid", file))
 	case ".m3u8":
+		p := path.Join(".", "cache", "vid", file)
+		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
+			fileWithoutExtension := pathhelpers.GetNameWithoutExtension(file)
+			out, err := m3u8.CreateManifestForFile(path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension)))
+			if err != nil {
+				fmt.Println("could not generate manifest file: ", err.Error())
+
+				w.WriteHeader(500)
+				w.Write([]byte("could not generate manifest"))
+			}
+
+			fmt.Println("generated manifest: ", out)
+		}
+
 		w.Header().Add("Content-Type", "application/vnd.apple.mpegurl")
-		http.ServeFile(w, r, path.Join(".", "cache", "vid", file))
+		http.ServeFile(w, r, p)
 	default:
 		fmt.Println(path.Ext(file))
 	}
