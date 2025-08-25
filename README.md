@@ -13,7 +13,7 @@ The service is not intended to be hosted to many people so the performance hit o
 - [x] Serve up a video file with HLS
 - [ ] Serve up a video file on the fly with HLS
   - [x] Pre-create the entire .m3u8 manifest
-  - [ ] Transcode one chunk ffmpeg command
+  - [x] Transcode one chunk ffmpeg command
   - [ ] Start the transcode for 3 chunks ahead
   - [ ] If a chunk is requested that has not transcoded yet, transcode that one and 3 chunks ahead.
 
@@ -75,6 +75,17 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
 ```
 
 Surprisingly you can view the video while the transcode is happening and it will reload the manifest file at the end of the video and "live stream it" which is pretty cool but it removes the ability to seek through the video and that is where you or need to wait for the entire video to be transcoded or transcode it on the fly
+
+## Convert single chunk
+
+```bash
+ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
+  -hwaccel_output_format vaapi \
+  -ss 10 -t 10 \
+  -i ./tmp/vid.mp4 \
+  -c:v h264_vaapi -c:a aac \
+  -f mpegts ./tmp/chunk_1.ts
+```
 
 ## Acknowledgements
 

@@ -48,10 +48,10 @@ func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 	switch path.Ext(file) {
 	case ".ts":
 		w.Header().Add("Content-Type", "video/MP2T")
-		http.ServeFile(w, r, path.Join(".", "public", file))
+		http.ServeFile(w, r, path.Join(".", "cache", "vid", file))
 	case ".m3u8":
 		w.Header().Add("Content-Type", "application/vnd.apple.mpegurl")
-		http.ServeFile(w, r, path.Join(".", "public", file))
+		http.ServeFile(w, r, path.Join(".", "cache", "vid", file))
 	default:
 		fmt.Println(path.Ext(file))
 	}
