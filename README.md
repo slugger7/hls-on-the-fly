@@ -87,6 +87,20 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
   -f mpegts ./tmp/chunk_1.ts
 ```
 
+## List all keyframes and their corresponding timestamp
+
+With the output of the following we should be able to better predict the timestamps and precise cut points to make in the videos to ensure that each cut is on a keyframe
+
+```bash
+ffprobe -select_streams v:0 -show_frames -show_entries frame=pkt_dts_time,key_frame -of csv tmp/vid.mp4 | grep ",1"
+```
+
+The following is all of the data but just in json.
+
+```bash
+ffprobe -select_streams v:0 -show_frames -print_format json tmp/vid.mp4 
+```
+
 ## Current issues
 
 At the moment I am predicting the segment durations (thinking that they will be the same as what I specified). 
