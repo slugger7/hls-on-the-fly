@@ -9,9 +9,12 @@ import (
 	"strings"
 )
 
-func CreateManifestForFile(p string) (string, error) {
+func CreateManifestForFile(p string, hlsTime int) (string, error) {
 	cacheDir := "./cache"
-	hlsTime := 5
+
+	if hlsTime == 0 {
+		hlsTime = 5
+	}
 
 	probe, err := ffprobe.FFProbe(p)
 	if err != nil {
@@ -26,7 +29,7 @@ func CreateManifestForFile(p string) (string, error) {
 		"#EXT-X-VERSION:3",
 		fmt.Sprintf("#EXT-X-TARGETDURATION:%v", hlsTime),
 		"#EXT-X-MEDIA-SEQUENCE:0",
-		"",
+		"\n",
 	}
 
 	data := strings.Join(lines, "\n")
@@ -56,7 +59,7 @@ func CreateManifestForFile(p string) (string, error) {
 	}
 
 	for i := 0; float64(i*hlsTime) <= probe.Format.Duration; i++ {
-		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v%v.ts\n", hlsTime, base, i)); err != nil {
+		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v.0,\n%v.%v.ts\n", hlsTime, base, i)); err != nil {
 			fmt.Println("could not write to manifest for: ", i, err.Error())
 			return "", err
 		}

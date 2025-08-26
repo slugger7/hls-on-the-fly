@@ -71,7 +71,7 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
   -i ./tmp/vid.mp4 \
   -c:v h264_vaapi \
   -c:a aac \
-  -hls_time 10 -hls_list_size 0 -f hls ./public/index.m3u8
+  -hls_time 5 -hls_list_size 0 -f hls ./public/index.m3u8
 ```
 
 Surprisingly you can view the video while the transcode is happening and it will reload the manifest file at the end of the video and "live stream it" which is pretty cool but it removes the ability to seek through the video and that is where you or need to wait for the entire video to be transcoded or transcode it on the fly
@@ -86,6 +86,22 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
   -c:v h264_vaapi -c:a aac \
   -f mpegts ./tmp/chunk_1.ts
 ```
+
+## Current issues
+
+At the moment I am predicting the segment durations (thinking that they will be the same as what I specified). 
+Turns out this is not true and I think it is due to the keyframes of a video that it cant cut at exactly the point that I have chosen.
+
+An option that would make this entire endeavour irrelevant is to actually change that the video has more keyframes but that would require the entire video to be transcoded
+
+An example would be to take a simple video file and generate one chunk and then do an `ffprobe` on that chunk to see what its actual duration is.
+Not the number that you specified right? (If it is just know it will not always be that case for every video that you transcode)
+
+This means that the prediction of the chunks gets all the things out of sync and it is not able to join the two chunks together.
+
+Another issue which I can't explain yet is the fact that the first chunk when you generate all of the chunks with ffmpeg is around 10sec with the target duration of the manifest set at 10 as well even when the hls_time was set to 5.
+
+If this is going to work I will need to find a way to correctly predict the chunk indicies and then be able to precicesly generate these chunks as the client needs them.
 
 ## Acknowledgements
 

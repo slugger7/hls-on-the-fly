@@ -4,13 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hls-on-the-fly/internal/ffmpeg"
 	"hls-on-the-fly/internal/m3u8"
 	pathhelpers "hls-on-the-fly/internal/path_helpers"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"sync"
 )
+
+const hlsTime = 5
+
+var mu sync.Mutex
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
@@ -49,15 +55,42 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 	file := r.PathValue("file")
 	fmt.Println(file)
+	p := path.Join(".", "cache", "vid", file)
+	fileWithoutExtension := pathhelpers.GetNameWithoutExtension(file)
+
 	switch path.Ext(file) {
 	case ".ts":
+		mu.Lock()
+		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
+			chunk, err := pathhelpers.GetChunkNumber(file)
+			if err != nil {
+				w.WriteHeader(500)
+				w.Write([]byte("could not parse chunk number"))
+				return
+			}
+
+			// can use this function to remove the chunk number as well
+			fileWithoutExtension = pathhelpers.GetNameWithoutExtension(fileWithoutExtension)
+
+			videoFile := path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension))
+
+			out, err := ffmpeg.HLSChunk(hlsTime, hlsTime*chunk, videoFile, p)
+			if err != nil {
+				w.WriteHeader(500)
+				w.Write([]byte("could not transcode chunk"))
+				return
+			}
+
+			fmt.Println(out)
+		}
+
 		w.Header().Add("Content-Type", "video/MP2T")
 		http.ServeFile(w, r, path.Join(".", "cache", "vid", file))
+		mu.Unlock()
 	case ".m3u8":
-		p := path.Join(".", "cache", "vid", file)
 		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-			fileWithoutExtension := pathhelpers.GetNameWithoutExtension(file)
-			out, err := m3u8.CreateManifestForFile(path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension)))
+			videoFile := path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension))
+			out, err := m3u8.CreateManifestForFile(videoFile, hlsTime)
 			if err != nil {
 				fmt.Println("could not generate manifest file: ", err.Error())
 

@@ -18,7 +18,7 @@ func main() {
 	}
 
 	for i := 0; float64(i*hlsTime) <= probeData.Format.Duration; i++ {
-		out, err := ffmpeg.HLSChunk(hlsTime, hlsTime*i, vid, path.Join(cacheDir, fmt.Sprintf("vid%v.ts", i)))
+		out, err := ffmpeg.HLSChunk(hlsTime, hlsTime*i, vid, path.Join(cacheDir, fmt.Sprintf("vid.%v.ts", i)))
 		if err != nil {
 			fmt.Println("i", i)
 			panic(err)
