@@ -121,3 +121,4 @@ If this is going to work I will need to find a way to correctly predict the chun
 
 - Project was created using [go-blueprint](https://github.com/Melkeydev/go-blueprint)
 - For testing purposes I used [Big Buck Bunny](https://peach.blender.org/) as a test video
+- [Jellyfin](https://github.com/jellyfin/jellyfin) ended up digging through some of their code to see what they ended up doing

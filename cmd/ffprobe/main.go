@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	p := "./tmp/vid.mp4"
+	p := "./tmp/vid-big.mp4"
 
-	data, err := ffprobe.FFProbe(p)
+	data, err := ffprobe.Frames(p)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
