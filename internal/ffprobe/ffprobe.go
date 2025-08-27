@@ -117,12 +117,14 @@ func FFProbe(p string) (*FFProbeData, error) {
 	return (&FFProbeData{}).fromRaw(&js), nil
 }
 
-func Frames(p string) ([]float64, error) {
+func Frames(p string) (FrameProbe, error) {
 	cmd := exec.Command("ffprobe",
 		"-fflags", "+genpts",
 		"-v", "error",
 		"-skip_frame", "nokey",
 		"-show_entries", "packet=pts_time,flags",
+		"-show_entries", "format=duration",
+		"-show_entries", "stream=duration",
 		"-select_streams", "v",
 		"-of", "csv",
 		p,
@@ -131,12 +133,12 @@ func Frames(p string) ([]float64, error) {
 	fmt.Println(cmd.String())
 
 	fw := frameWriter{
-		ch: make(chan float64),
+		ch: make(chan significantType),
 	}
 
 	cmd.Stdout = fw
 
-	ch := make(chan []float64)
+	ch := make(chan FrameProbe)
 	go fw.KeyFrameConsumer(ch)
 
 	if err := cmd.Run(); err != nil {

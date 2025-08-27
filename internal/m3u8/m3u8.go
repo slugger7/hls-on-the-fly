@@ -16,13 +16,13 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 		hlsTime = 5
 	}
 
-	probe, err := ffprobe.FFProbe(p)
+	probe, err := ffprobe.Frames(p)
 	if err != nil {
-		fmt.Println("Could not probe:", p, err.Error())
+		fmt.Println("Could not p:", p, err.Error())
 		return "", err
 	}
 
-	_ = probe
+	fmt.Println(probe.Duration, len(probe.Frames))
 
 	lines := []string{
 		"#EXTM3U",
@@ -58,8 +58,36 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 		return "", err
 	}
 
-	for i := 0; float64(i*hlsTime) <= probe.Format.Duration; i++ {
-		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v.0,\n%v.%v.ts\n", hlsTime, base, i)); err != nil {
+	previousFrame := 0.0
+	i := 1
+	for float64(i*hlsTime) <= probe.Duration {
+		timestamp := float64(i * hlsTime)
+		closestFrame := 0.0
+		closestFrameIndex := 0
+		for x, f := range probe.Frames {
+			if timestamp < f {
+				break
+			}
+			closestFrame = f
+			closestFrameIndex = x
+		}
+		_ = closestFrameIndex
+
+		// reduce our frames list soo we do not have to loop through all previous frames every time
+		probe.Frames = probe.Frames[closestFrameIndex:]
+
+		diff := closestFrame - previousFrame
+		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v.%v.ts\n", diff, base, i)); err != nil {
+			fmt.Println("could not write to manifest for: ", i, err.Error())
+			return "", err
+		}
+
+		previousFrame = closestFrame
+		i++
+	}
+
+	if previousFrame != probe.Duration {
+		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v.%v.ts\n", probe.Duration-previousFrame, base, i)); err != nil {
 			fmt.Println("could not write to manifest for: ", i, err.Error())
 			return "", err
 		}
