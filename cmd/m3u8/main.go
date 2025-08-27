@@ -14,4 +14,10 @@ func main() {
 	}
 
 	fmt.Println("manifest created", manifest)
+
+	segments, _ := m3u8.ParseManifest("./cache/vid/vid.m3u8")
+
+	for _, s := range segments {
+		fmt.Println(s.Name, s.Start, s.Duration)
+	}
 }

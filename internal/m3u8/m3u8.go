@@ -6,8 +6,53 @@ import (
 	pathhelpers "hls-on-the-fly/internal/path_helpers"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
+
+type Segment struct {
+	Name     string
+	Duration float64
+	Start    float64
+}
+
+func ParseManifest(p string) ([]Segment, error) {
+	dat, err := os.ReadFile(p)
+	if err != nil {
+		fmt.Println("colud not open playlist file", p, err.Error())
+		return nil, err
+	}
+
+	tags := strings.Split(string(dat), "#")
+
+	segments := []Segment{}
+	start := 0.0
+	for _, t := range tags {
+		if strings.HasPrefix(t, "EXTINF") {
+			t = strings.ReplaceAll(t, "\n", "")
+			colonIndex := strings.Index(t, ":")
+			commaIndex := strings.Index(t, ",")
+			durationString := t[colonIndex+1 : commaIndex]
+			name := t[commaIndex+1:]
+
+			duration, err := strconv.ParseFloat(durationString, 64)
+			if err != nil {
+				fmt.Println("could not parse duration", durationString, err.Error())
+				return nil, err
+			}
+
+			segments = append(segments, Segment{
+				Name:     name,
+				Duration: duration,
+				Start:    start,
+			})
+
+			start += duration
+		}
+	}
+
+	return segments, nil
+}
 
 func CreateManifestForFile(p string, hlsTime int) (string, error) {
 	cacheDir := "./cache"
