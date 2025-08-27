@@ -62,26 +62,35 @@ func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 	case ".ts":
 		mu.Lock()
 		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-			chunk, err := pathhelpers.GetChunkNumber(file)
+			baseFileName := pathhelpers.GetNameWithoutExtension(fileWithoutExtension)
+			manifestFilePath := path.Join(".", "cache", "vid", fmt.Sprintf("%v.m3u8", baseFileName))
+
+			segments, err := m3u8.ParseManifest(manifestFilePath)
 			if err != nil {
 				w.WriteHeader(500)
-				w.Write([]byte("could not parse chunk number"))
+				w.Write([]byte("could not parse manifest file"))
 				return
 			}
 
-			// can use this function to remove the chunk number as well
-			fileWithoutExtension = pathhelpers.GetNameWithoutExtension(fileWithoutExtension)
+			var segment m3u8.Segment
+			for _, s := range segments {
+				if s.Name == file {
+					segment = s
+				}
+			}
 
-			videoFile := path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension))
-
-			out, err := ffmpeg.HLSChunk(hlsTime, hlsTime*chunk, videoFile, p)
-			if err != nil {
+			if s == nil {
 				w.WriteHeader(500)
-				w.Write([]byte("could not transcode chunk"))
+				w.Write([]byte("no segment exists for request"))
 				return
 			}
 
-			fmt.Println(out)
+			_, err = ffmpeg.HLSChunk(int(segment.Duration), int(segment.Start), path.Join(".", "tmp", baseFileName+".mp4"), p)
+			if err != nil {
+				w.WriteHeader(500)
+				w.Write([]byte("could not transcode segment"))
+				return
+			}
 		}
 
 		w.Header().Add("Content-Type", "video/MP2T")

@@ -104,9 +104,9 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 	}
 
 	previousFrame := 0.0
-	i := 1
+	i := 0
 	for float64(i*hlsTime) <= probe.Duration {
-		timestamp := float64(i * hlsTime)
+		timestamp := float64(i + 1*hlsTime)
 		closestFrame := 0.0
 		closestFrameIndex := 0
 		for x, f := range probe.Frames {
@@ -122,6 +122,11 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 		probe.Frames = probe.Frames[closestFrameIndex:]
 
 		diff := closestFrame - previousFrame
+		if diff == 0 {
+			fmt.Println("segment duration 0")
+
+			// this should never be the case
+		}
 		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v.%v.ts\n", diff, base, i)); err != nil {
 			fmt.Println("could not write to manifest for: ", i, err.Error())
 			return "", err

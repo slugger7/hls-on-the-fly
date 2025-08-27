@@ -1,2 +1,2 @@
 ### GET root
-GET http://localhost:8080
+GET http://localhost:8080/video/vid.0.ts
