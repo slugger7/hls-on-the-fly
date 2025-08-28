@@ -54,13 +54,7 @@ func ParseManifest(p string) ([]Segment, error) {
 	return segments, nil
 }
 
-func CreateManifestForFile(p string, hlsTime int) (string, error) {
-	cacheDir := "./cache"
-
-	if hlsTime == 0 {
-		hlsTime = 5
-	}
-
+func CreateManifestForFile(p string, hlsTime int, cacheDir string) (string, error) {
 	probe, err := ffprobe.Frames(p)
 	if err != nil {
 		fmt.Println("Could not p:", p, err.Error())

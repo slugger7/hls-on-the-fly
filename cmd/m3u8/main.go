@@ -8,7 +8,7 @@ import (
 func main() {
 	vid := "./tmp/vid.mp4"
 
-	manifest, err := m3u8.CreateManifestForFile(vid, 5)
+	manifest, err := m3u8.CreateManifestForFile(vid, 5, "./cache")
 	if err != nil {
 		panic(err)
 	}

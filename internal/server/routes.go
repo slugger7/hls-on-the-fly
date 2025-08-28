@@ -1,20 +1,16 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hls-on-the-fly/internal/ffmpeg"
 	"hls-on-the-fly/internal/m3u8"
 	pathhelpers "hls-on-the-fly/internal/path_helpers"
-	"log"
 	"net/http"
 	"os"
 	"path"
 	"sync"
 )
-
-const hlsTime = 5
 
 var mu sync.Mutex
 
@@ -26,8 +22,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.Handle("/", fs)
 
 	mux.HandleFunc("/video/{file}", s.VideoHandler)
-
-	mux.HandleFunc("/health", s.healthHandler)
 
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)
@@ -99,7 +93,7 @@ func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 	case ".m3u8":
 		if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
 			videoFile := path.Join(".", "tmp", fmt.Sprintf("%v.mp4", fileWithoutExtension))
-			out, err := m3u8.CreateManifestForFile(videoFile, hlsTime)
+			out, err := m3u8.CreateManifestForFile(videoFile, s.env.HlsTime, s.env.Cache)
 			if err != nil {
 				fmt.Println("could not generate manifest file: ", err.Error())
 
@@ -114,17 +108,5 @@ func (s *Server) VideoHandler(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, p)
 	default:
 		fmt.Println(path.Ext(file))
-	}
-}
-
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := json.Marshal(s.db.Health())
-	if err != nil {
-		http.Error(w, "Failed to marshal health check response", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(resp); err != nil {
-		log.Printf("Failed to write response: %v", err)
 	}
 }

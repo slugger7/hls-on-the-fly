@@ -9,27 +9,23 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"hls-on-the-fly/internal/database"
+	"hls-on-the-fly/internal/environment"
 )
 
 type Server struct {
-	port int
-
-	db database.Service
+	env *environment.Env
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	fmt.Println("Running on:", port)
 	NewServer := &Server{
-		port: port,
-
-		db: database.New(),
+		env: environment.GetEnv(),
 	}
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
+		Addr:         fmt.Sprintf(":%v", NewServer.env.Port),
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
