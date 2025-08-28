@@ -103,42 +103,14 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 		return "", err
 	}
 
-	previousFrame := 0.0
-	i := 0
-	for float64(i*hlsTime) <= probe.Duration {
-		timestamp := float64(i + 1*hlsTime)
-		closestFrame := 0.0
-		closestFrameIndex := 0
-		for x, f := range probe.Frames {
-			if timestamp < f {
-				break
-			}
-			closestFrame = f
-			closestFrameIndex = x
-		}
-		_ = closestFrameIndex
+	// have to append the duration as "the last keyframe"
+	segments := generateSegmentsForManifest(hlsTime, append(probe.Frames, probe.Duration), func(i int) string {
+		return fmt.Sprintf("%v.%v.ts", base, i)
+	})
 
-		// reduce our frames list soo we do not have to loop through all previous frames every time
-		probe.Frames = probe.Frames[closestFrameIndex:]
-
-		diff := closestFrame - previousFrame
-		if diff == 0 {
-			fmt.Println("segment duration 0")
-
-			// this should never be the case
-		}
-		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v.%v.ts\n", diff, base, i)); err != nil {
-			fmt.Println("could not write to manifest for: ", i, err.Error())
-			return "", err
-		}
-
-		previousFrame = closestFrame
-		i++
-	}
-
-	if previousFrame != probe.Duration {
-		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v.%v.ts\n", probe.Duration-previousFrame, base, i)); err != nil {
-			fmt.Println("could not write to manifest for: ", i, err.Error())
+	for _, s := range segments {
+		if _, err := f.WriteString(fmt.Sprintf("#EXTINF:%v,\n%v\n", s.Duration, s.Name)); err != nil {
+			fmt.Println("could not write to manifest for: ", s.Name, err.Error())
 			return "", err
 		}
 	}
@@ -149,4 +121,32 @@ func CreateManifestForFile(p string, hlsTime int) (string, error) {
 	}
 
 	return manifestPath, nil
+}
+
+func generateSegmentsForManifest(hlsTime int, frames []float64, nameFunc func(int) string) []Segment {
+	if len(frames) == 0 {
+		return []Segment{}
+	}
+
+	// remove first keyframe which is at 0 seconds
+	frames = frames[1:]
+
+	var segments []Segment
+	previousFrame := 0.0
+	segmentIndex := 0
+	multiplier := 1
+	for _, f := range frames {
+		for float64(hlsTime*multiplier) <= f {
+			multiplier++
+		}
+		segments = append(segments, Segment{
+			Name:     nameFunc(segmentIndex),
+			Start:    previousFrame,
+			Duration: f - previousFrame,
+		})
+		segmentIndex++
+		previousFrame = f
+	}
+
+	return segments
 }
