@@ -12,12 +12,12 @@ func main() {
 	cacheDir := "./cache/vid"
 	hlsTime := 5
 
-	probeData, err := ffprobe.FFProbe(vid)
+	probeData, err := ffprobe.Frames(vid)
 	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; float64(i*hlsTime) <= probeData.Format.Duration; i++ {
+	for i := 0; float64(i*hlsTime) <= probeData.Duration; i++ {
 		out, err := ffmpeg.HLSChunk(hlsTime, hlsTime*i, vid, path.Join(cacheDir, fmt.Sprintf("vid.%v.ts", i)))
 		if err != nil {
 			fmt.Println("i", i)
