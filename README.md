@@ -14,8 +14,8 @@ The service is not intended to be hosted to many people so the performance hit o
 - [ ] Serve up a video file on the fly with HLS
   - [x] Pre-create the entire .m3u8 manifest
   - [x] Transcode one chunk ffmpeg command
-  - [ ] Start the transcode for 3 chunks ahead
-  - [ ] If a chunk is requested that has not transcoded yet, transcode that one and 3 chunks ahead.
+  - [x] Start the transcode for 3 chunks ahead
+  - [x] If a chunk is requested that has not transcoded yet, transcode it and serve it
 
 ### Future goals
 
@@ -25,41 +25,69 @@ The service is not intended to be hosted to many people so the performance hit o
 
 - Install ffmpeg on your machine
 - Install golang on your machine
+- copy (.env.example)[./.env.example] to `.env` and alter any values you like
 - Use the commands in the makefile section to run the project
 
 ## MakeFile
 
 Run build make command with tests
+
 ```bash
 make all
 ```
 
 Build the application
+
 ```bash
 make build
 ```
 
 Run the application
+
 ```bash
 make run
 ```
 
 Live reload the application:
+
 ```bash
 make watch
 ```
 
 Run the test suite:
+
 ```bash
 make test
 ```
 
 Clean up binary from the last build:
+
 ```bash
 make clean
 ```
 
-## Convert video to HLS format
+## Getting started
+
+Place a video file in your media directory (default (tmp)[./tmp]) with the name `vid.mp4`
+
+```bash
+make run
+
+#or
+
+make watch
+```
+
+Visit the the application on (localhost:8080)[http://localhost:8080] (unless you changed the port in .env)
+
+In your cache directory a new (folder)[./cache/vid] will be created with a (manifest)[./cache/vid/vid.m3u8] file.
+As you stream the video it will be transcoded in chunks and be played in the player
+
+## Process
+
+I have left this section in here as this was my documentation as I was creating the project with some of the mistakes that I made along the way with some solutions that I came up with along the way.
+
+### Convert video to HLS format
 
 ```bash
 # Without GPU
@@ -76,7 +104,7 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
 
 Surprisingly you can view the video while the transcode is happening and it will reload the manifest file at the end of the video and "live stream it" which is pretty cool but it removes the ability to seek through the video and that is where you or need to wait for the entire video to be transcoded or transcode it on the fly
 
-## Convert single chunk
+### Convert single chunk
 
 ```bash
 ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
@@ -87,7 +115,7 @@ ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \
   -f mpegts ./tmp/chunk_1.ts
 ```
 
-## List all keyframes and their corresponding timestamp
+### List all keyframes and their corresponding timestamp
 
 With the output of the following we should be able to better predict the timestamps and precise cut points to make in the videos to ensure that each cut is on a keyframe
 
@@ -98,12 +126,12 @@ ffprobe -select_streams v:0 -show_frames -show_entries frame=pkt_dts_time,key_fr
 The following is all of the data but just in json.
 
 ```bash
-ffprobe -select_streams v:0 -show_frames -print_format json tmp/vid.mp4 
+ffprobe -select_streams v:0 -show_frames -print_format json tmp/vid.mp4
 ```
 
-## Current issues
+### Current issues
 
-At the moment I am predicting the segment durations (thinking that they will be the same as what I specified). 
+At the moment I am predicting the segment durations (thinking that they will be the same as what I specified).
 Turns out this is not true and I think it is due to the keyframes of a video that it cant cut at exactly the point that I have chosen.
 
 An option that would make this entire endeavour irrelevant is to actually change that the video has more keyframes but that would require the entire video to be transcoded
