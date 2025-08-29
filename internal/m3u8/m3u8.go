@@ -98,7 +98,7 @@ func CreateManifestForFile(p string, hlsTime int, cacheDir string) (string, erro
 	}
 
 	// have to append the duration as "the last keyframe"
-	segments := generateSegmentsForManifest(hlsTime, append(probe.Frames, probe.Duration), func(i int) string {
+	segments := generateSegmentsForManifest(hlsTime, probe.Duration, probe.Frames, func(i int) string {
 		return fmt.Sprintf("%v.%v.ts", base, i)
 	})
 
@@ -117,29 +117,38 @@ func CreateManifestForFile(p string, hlsTime int, cacheDir string) (string, erro
 	return manifestPath, nil
 }
 
-func generateSegmentsForManifest(hlsTime int, frames []float64, nameFunc func(int) string) []Segment {
+func generateSegmentsForManifest(hlsTime int, duration float64, frames []float64, nameFunc func(int) string) []Segment {
 	if len(frames) == 0 {
 		return []Segment{}
 	}
 
-	// remove first keyframe which is at 0 seconds
-	frames = frames[1:]
+	segments := []Segment{}
 
-	var segments []Segment
 	previousFrame := 0.0
-	segmentIndex := 0
-	multiplier := 1
+	latestSegmentFrame := 0.0
+	segmentCounter := 0
 	for _, f := range frames {
-		for float64(hlsTime*multiplier) <= f {
-			multiplier++
+		if float64(hlsTime) >= f-latestSegmentFrame {
+			previousFrame = f
+			continue
+			// find a frame that is just over the hlsTime
 		}
+
 		segments = append(segments, Segment{
-			Name:     nameFunc(segmentIndex),
-			Start:    previousFrame,
-			Duration: f - previousFrame,
+			Name:     nameFunc(segmentCounter),
+			Start:    latestSegmentFrame,
+			Duration: previousFrame - latestSegmentFrame,
 		})
-		segmentIndex++
-		previousFrame = f
+		segmentCounter++
+		latestSegmentFrame = previousFrame
+	}
+
+	if latestSegmentFrame != duration {
+		segments = append(segments, Segment{
+			Name:     nameFunc(segmentCounter),
+			Start:    latestSegmentFrame,
+			Duration: duration - latestSegmentFrame,
+		})
 	}
 
 	return segments

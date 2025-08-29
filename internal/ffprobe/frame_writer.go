@@ -63,8 +63,8 @@ func (fw frameWriter) Write(p []byte) (int, error) {
 }
 
 type FrameProbe struct {
-	Frames   []float64
-	Duration float64
+	Frames   []float64 `json:"frames"`
+	Duration float64   `json:"duration"`
 }
 
 func (fw frameWriter) KeyFrameConsumer(ch chan<- FrameProbe) {

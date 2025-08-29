@@ -7,6 +7,8 @@ import (
 	"github.com/go-playground/assert"
 )
 
+const HLS_TIME = 5
+
 func assertEqualSegments(t *testing.T, actual, expected []Segment) {
 	assert.Equal(t, len(actual), len(expected))
 
@@ -22,65 +24,74 @@ func nameFunc(i int) string {
 }
 
 func Test_generateSegmentForManifest_withNilFrames_shouldReturnEmptyArray(t *testing.T) {
-	segments := generateSegmentsForManifest(5, nil, nameFunc)
+	segments := generateSegmentsForManifest(5, 0.0, nil, nameFunc)
 
 	assert.IsEqual(segments, []Segment{})
 }
 
 func Test_generateSegmentForManifest_withNoFrames_shouldReturnEmptyArray(t *testing.T) {
-	segments := generateSegmentsForManifest(5, []float64{}, nameFunc)
+	segments := generateSegmentsForManifest(5, 0.0, []float64{}, nameFunc)
 
 	assert.IsEqual(segments, []Segment{})
 }
 
-func Test_generateSegmentsForManifest_with_two_frames_one_more_than_hls_time_should_have_one_segment(t *testing.T) {
-	hlsTime := 5
-	duration := 5.1
-	frames := []float64{0.0, duration}
+func Test_generateSegmentForManifest_withOneFrameLessThanHLSTime_shouldReturnOneSegment(t *testing.T) {
+	frames := []float64{0.0, 2.2}
 
-	segments := generateSegmentsForManifest(hlsTime, frames, nameFunc)
+	segments := generateSegmentsForManifest(HLS_TIME, 2.2, frames, nameFunc)
 
-	expected := []Segment{{Name: "0", Start: 0, Duration: duration}}
+	expected := []Segment{{Name: nameFunc(0), Start: frames[0], Duration: frames[1]}}
 
 	assertEqualSegments(t, segments, expected)
 }
 
-func Test_generateSegmentsForManifest_with_two_frames_one_less_than_hls_time_should_have_one_segment(t *testing.T) {
-	hlsTime := 5
-	duration := 4.9
-	frames := []float64{0.0, duration}
+func Test_generateSegmentForManifest_withTwoFramesLessThanHLSTime_shouldReturnOneSegment(t *testing.T) {
+	frames := []float64{0.0, 2.2, 4.4}
 
-	segments := generateSegmentsForManifest(hlsTime, frames, nameFunc)
+	segments := generateSegmentsForManifest(HLS_TIME, 4.4, frames, nameFunc)
 
-	expected := []Segment{{Name: "0", Start: 0, Duration: duration}}
+	expected := []Segment{{Name: nameFunc(0), Start: frames[0], Duration: frames[2]}}
 
 	assertEqualSegments(t, segments, expected)
 }
 
-func Test_generateSegmentsForManifest_withThreeFrames_theLastWithinHlsTimeOfSecond_shouldReturnTwoSegments(t *testing.T) {
-	hlsTime := 5
-	frames := []float64{0.0, 5.1, 8.0}
+func Test_generateSegmentForManifest_withOneFrameLessThanHLSTimeAndOneFrameAboveeHLSTime_shouldReturnTwoSegments(t *testing.T) {
+	frames := []float64{0.0, 2.2, 5.1}
 
-	segments := generateSegmentsForManifest(hlsTime, frames, nameFunc)
+	segments := generateSegmentsForManifest(HLS_TIME, 5.1, frames, nameFunc)
+
+	fmt.Println(segments)
 
 	expected := []Segment{
-		{Name: "0", Start: 0, Duration: 5.1},
-		{Name: "1", Start: 5.1, Duration: frames[2] - frames[1]}, // if you do not use the actual values then it does not equal the same things
+		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
 	}
 
 	assertEqualSegments(t, segments, expected)
 }
 
-func Test_generateSegmentForManifest_withThreeFrames_theLastEqualingAnHLSSegment_shouldReturnTwoSegments(t *testing.T) {
-	hlsTime := 5
-	frames := []float64{0.0, 5.1, 10.0}
+func Test_generatSegmentForManifest_withFirstFrameUnderHLSTimeAndSecondFrameEqualToHLSTime_shouldReturnTwoSegmentsWhereSecondSegmentEqualsHLSTime(t *testing.T) {
+	frames := []float64{0.0, 2.5, 7.5}
 
-	segments := generateSegmentsForManifest(hlsTime, frames, nameFunc)
+	segments := generateSegmentsForManifest(HLS_TIME, 7.5, frames, nameFunc)
 
 	expected := []Segment{
-		{Name: "0", Start: 0, Duration: frames[1]},
-		{Name: "1", Start: frames[1], Duration: frames[2] - frames[1]},
+		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
 	}
 
 	assertEqualSegments(t, segments, expected)
+}
+
+func Test_generateSegmentForManifest_withLastFrameBetweenSegments_shouldReturnTwoSegments(t *testing.T) {
+	frames := []float64{0.0, 5.0, 7.5}
+
+	segments := generateSegmentsForManifest(HLS_TIME, 7.5, frames, nameFunc)
+
+	expeted := []Segment{
+		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
+	}
+
+	assertEqualSegments(t, segments, expeted)
 }

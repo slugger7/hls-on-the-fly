@@ -91,7 +91,7 @@ I have left this section in here as this was my documentation as I was creating 
 
 ```bash
 # Without GPU
-ffmpeg -i ./tmp/vid.mp4 -c:v libx264 -c:a aac -hls_list_size 0 -f hls ./public/index.m3u8
+ffmpeg -i ./tmp/vid.mp4 -c:v libx264 -c:a aac -hls_list_size 0 -f hls ./tmp/vid/vid.m3u8
 
 # With GPU
 ffmpeg -hwaccel vaapi -vaapi_device /dev/dri/renderD128 \

@@ -1,8 +1,11 @@
 package ffprobe
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path"
 )
 
 func Frames(p string) (FrameProbe, error) {
@@ -35,6 +38,23 @@ func Frames(p string) (FrameProbe, error) {
 	close(fw.ch)
 
 	frames := <-ch
+
+	dat, err := json.Marshal(frames)
+	if err != nil {
+		fmt.Println("could not marshal frames for debug")
+	} else {
+		f, err := os.Create(path.Join(".", "cache", "vid", "debug.json"))
+		if err != nil {
+			fmt.Println("could not create debug log")
+			return frames, nil
+		}
+
+		defer f.Close()
+
+		if _, err := f.Write(dat); err != nil {
+			fmt.Println("could not write data to debug log")
+		}
+	}
 
 	return frames, nil
 }
