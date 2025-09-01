@@ -64,7 +64,7 @@ func Test_generateSegmentForManifest_withOneFrameLessThanHLSTimeAndOneFrameAbove
 
 	expected := []Segment{
 		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
-		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: 5.1 - 2.2},
 	}
 
 	assertEqualSegments(t, segments, expected)
@@ -77,7 +77,7 @@ func Test_generatSegmentForManifest_withFirstFrameUnderHLSTimeAndSecondFrameEqua
 
 	expected := []Segment{
 		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
-		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: 7.5 - 2.5},
 	}
 
 	assertEqualSegments(t, segments, expected)
@@ -90,7 +90,7 @@ func Test_generateSegmentForManifest_withLastFrameBetweenSegments_shouldReturnTw
 
 	expeted := []Segment{
 		{Name: nameFunc(0), Start: frames[0], Duration: frames[1]},
-		{Name: nameFunc(1), Start: frames[1], Duration: frames[2] - frames[1]},
+		{Name: nameFunc(1), Start: frames[1], Duration: 7.5 - 5.0},
 	}
 
 	assertEqualSegments(t, segments, expeted)

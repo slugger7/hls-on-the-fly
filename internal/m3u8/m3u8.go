@@ -8,6 +8,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 type Segment struct {
@@ -134,20 +136,28 @@ func generateSegmentsForManifest(hlsTime int, duration float64, frames []float64
 			// find a frame that is just over the hlsTime
 		}
 
+		dur, exact := decimal.NewFromFloat(previousFrame).Sub(decimal.NewFromFloat(latestSegmentFrame)).Float64()
+		if !exact {
+			fmt.Println("Not exact")
+		}
 		segments = append(segments, Segment{
 			Name:     nameFunc(segmentCounter),
 			Start:    latestSegmentFrame,
-			Duration: previousFrame - latestSegmentFrame,
+			Duration: dur,
 		})
 		segmentCounter++
 		latestSegmentFrame = previousFrame
 	}
 
+	dur, exact := decimal.NewFromFloat(duration).Sub(decimal.NewFromFloat(latestSegmentFrame)).Float64()
+	if !exact {
+		fmt.Println("Not exact")
+	}
 	if latestSegmentFrame != duration {
 		segments = append(segments, Segment{
 			Name:     nameFunc(segmentCounter),
 			Start:    latestSegmentFrame,
-			Duration: duration - latestSegmentFrame,
+			Duration: dur,
 		})
 	}
 
