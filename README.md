@@ -6,6 +6,14 @@ Instead what I would like to achieve is to have a way to serve up these videos t
 
 The service is not intended to be hosted to many people so the performance hit of the transcodes will only be local to that of the system owner.
 
+## DISCLAIMER
+
+I am still making some tweaking some small issues
+
+- [ ] incorrect math in golang producing unexpected results (it is possible that everything will fall into place after this is resolved)
+- [ ] ffmpeg chunks not according to keyframes
+- [ ] fix audio not synced with video
+
 ## Goals
 
 - [x] Set up http server
