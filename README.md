@@ -10,7 +10,7 @@ The service is not intended to be hosted to many people so the performance hit o
 
 I am still making some tweaking some small issues
 
-- [ ] incorrect math in golang producing unexpected results (it is possible that everything will fall into place after this is resolved)
+- [x] incorrect math in golang producing unexpected results (it is possible that everything will fall into place after this is resolved)
 - [ ] ffmpeg chunks not according to keyframes
 - [ ] fix audio not synced with video
 
@@ -19,7 +19,7 @@ I am still making some tweaking some small issues
 - [x] Set up http server
 - [x] Serve up a video file
 - [x] Serve up a video file with HLS
-- [ ] Serve up a video file on the fly with HLS
+- [x] Serve up a video file on the fly with HLS
   - [x] Pre-create the entire .m3u8 manifest
   - [x] Transcode one chunk ffmpeg command
   - [x] Start the transcode for 3 chunks ahead
